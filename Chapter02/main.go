@@ -50,12 +50,14 @@ func ingest(f io.Reader) (header []string, data [][]string, indices []map[string
 
 	indices = make([]map[string][]int, len(header))
 	var rowCount, colCount int = 0, len(header)
+	//逐行读取数据 rec读到的数据
 	for rec, err := r.Read(); err == nil; rec, err = r.Read() {
 		if len(rec) != colCount {
 			return nil, nil, nil, errors.Errorf("Expected Columns: %d. Got %d columns in row %d", colCount, len(rec), rowCount)
 		}
-		data = append(data, rec)
+		data = append(data, rec) //添加数据
 		for j, val := range rec {
+			//第j列的索引为空，则创建 j是当前行的第几列 val是当前行的j列的值的字符串 最后存的[]int是 列值
 			if indices[j] == nil {
 				indices[j] = make(map[string][]int)
 			}
@@ -246,10 +248,7 @@ func plotCEF(m map[string]float64) (*plot.Plot, error) {
 	}
 	sort.Strings(ordered)
 
-	p, err := plot.New()
-	if err != nil {
-		return nil, err
-	}
+	p := plot.New()
 
 	points := make(plotter.XYs, len(ordered))
 	for i, val := range ordered {
@@ -274,7 +273,7 @@ func plotHist(a []float64) (*plot.Plot, error) {
 	if err != nil {
 		return nil, err
 	}
-	p, err := plot.New()
+	p := plot.New()
 	if err != nil {
 		return nil, err
 	}
@@ -307,9 +306,7 @@ func plotHeatMap(corr mat.Matrix, labels []string) (p *plot.Plot, err error) {
 	pal := palette.Heat(48, 1)
 	m := heatmap{corr}
 	hm := plotter.NewHeatMap(m, pal)
-	if p, err = plot.New(); err != nil {
-		return
-	}
+	p = plot.New()
 	hm.NaN = color.RGBA{0, 0, 0, 0} // black
 
 	// add and adjust the prettiness of the chart
@@ -322,10 +319,7 @@ func plotHeatMap(corr mat.Matrix, labels []string) (p *plot.Plot, err error) {
 	p.Y.Tick.Marker = ticks(labels)
 
 	// add legend
-	l, err := plot.NewLegend()
-	if err != nil {
-		return p, err
-	}
+	l := plot.NewLegend()
 
 	thumbs := plotter.PaletteThumbnailers(pal)
 	for i := len(thumbs) - 1; i >= 0; i-- {
@@ -352,8 +346,8 @@ func plotHeatMap(corr mat.Matrix, labels []string) (p *plot.Plot, err error) {
 	l.Left = true
 	l.XOffs = -5
 	l.ThumbnailWidth = 5
-	l.Font.Size = 5
-
+	//l.Font.Size = 5
+	l.TextStyle.Font.Size = 5
 	p.Legend = l
 	return
 }
@@ -428,7 +422,7 @@ func runRegression(Xs [][]float64, Ys []float64, hdr []string) (r *regression.Re
 }
 
 func exploration() {
-	f, err := os.Open("train.csv")
+	f, err := os.Open("./house-prices-advanced-regression-techniques/train.csv")
 	mHandleErr(err)
 	defer f.Close()
 	hdr, data, indices, err := ingest(f)
@@ -478,8 +472,9 @@ func exploration() {
 	// figure out the correlation of things
 	m64, err := tensor.ToMat64(Xs, tensor.UseUnsafe())
 	mHandleErr(err)
-	corr := stat.CorrelationMatrix(nil, m64, nil)
-	hm, err := plotHeatMap(corr, newHdr)
+	var corr mat.SymDense
+	stat.CorrelationMatrix(&corr, m64, nil)
+	hm, err := plotHeatMap(corr.T(), newHdr)
 	mHandleErr(err)
 	hm.Save(60*vg.Centimeter, 60*vg.Centimeter, "heatmap.png")
 
@@ -506,9 +501,9 @@ func exploration() {
 }
 
 func main() {
-	// exploration()
+	//exploration()
 
-	f, err := os.Open("train.csv")
+	f, err := os.Open("./house-prices-advanced-regression-techniques/train.csv")
 	mHandleErr(err)
 	defer f.Close()
 	hdr, data, indices, err := ingest(f)
