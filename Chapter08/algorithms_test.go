@@ -43,7 +43,8 @@ func BenchmarkPIGO(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		grayGoImg = naughtyGrayscale(grayGoImg, goImg)
 		imgParams.Pixels = grayGoImg
-		dets = pigoClass.RunCascade(imgParams, cParams)
+		cParams.ImageParams = imgParams
+		dets = pigoClass.RunCascade(cParams, 0.0)
 		dets = pigoClass.ClusterDetections(dets, 0.3)
 	}
 	_ = dets

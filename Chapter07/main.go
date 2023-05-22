@@ -28,8 +28,6 @@ var (
 	cpuprofile = flag.String("cpuprofile", "", "CPU profiling")
 )
 
-const loc = "../testdata/mnist/"
-
 var dt tensor.Dtype
 
 func parseDtype() {
@@ -166,11 +164,13 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 }
 
 func main() {
-	imgs, err := readImageFile(os.Open("train-images-idx3-ubyte"))
+	flag.Parse()
+	parseDtype()
+	imgs, err := readImageFile(os.Open("train-images.idx3-ubyte"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	labels, err := readLabelFile(os.Open("train-labels-idx1-ubyte"))
+	labels, err := readLabelFile(os.Open("train-labels.idx1-ubyte"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,13 +178,13 @@ func main() {
 	inputs := prepareX(imgs)
 	targets := prepareY(labels)
 
-	data2, err := zca(data)
+	data2, err := zca(inputs)
 	if err != nil {
 		log.Fatal(err)
 	}
 	_ = data2
 
-	nat, err := native.MatrixF64(data2.(*tensor.Dense))
+	_, err = native.MatrixF64(data2.(*tensor.Dense))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -216,7 +216,7 @@ func main() {
 	cost := gorgonia.Must(gorgonia.Mean(losses))
 	cost = gorgonia.Must(gorgonia.Neg(cost))
 
-	// we wanna track costs
+	//需要跟踪成本
 	var costVal gorgonia.Value
 	gorgonia.Read(cost, &costVal)
 
@@ -281,6 +281,27 @@ func main() {
 		log.Printf("Epoch %d | cost %v", i, costVal)
 	}
 
+	testImgs, err := readImageFile(os.Open("t10k-images.idx3-ubyte"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testlabels, err := readLabelFile(os.Open("t10k-labels.idx1-ubyte"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testData := prepareX(testImgs)
+	testLbl := prepareY(testlabels)
+	shape := testData.Shape()
+	testData2, err := zca(testData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	visualize(testData, 10, 10, "testData.png")
+	visualize(testData2, 10, 10, "testData2.png")
+
 	var out gorgonia.Value
 	rv := gorgonia.Read(m.out, &out)
 	fwdNet := m.g.SubgraphRoots(rv)
@@ -301,7 +322,7 @@ func main() {
 		if err = vm2.RunAll(); err != nil {
 			log.Fatal("Predicting %d failed %v", i, err)
 		}
-		outRaw = out.Data().([]float64)
+		outRaw := out.Data().([]float64)
 		predicted = argmax(outRaw)
 
 		if predicted == label {

@@ -23,7 +23,7 @@ func knn(a [][]float64, k int, distance func(a, b []float64) float64) ([][]float
 		lastCol = append(lastCol, l)
 	}
 	sort.Sort(sort.Float64Slice(lastCol))
-	lastCol = sort.Reverse(sort.Float64Slice(lastCol)).(sort.Float64Slice)
-
+	//lastCol = sort.Reverse(sort.Float64Slice(lastCol)).(sort.Float64Slice)
+	sort.Reverse(sort.Float64Slice(lastCol))
 	return distances, lastCol
 }

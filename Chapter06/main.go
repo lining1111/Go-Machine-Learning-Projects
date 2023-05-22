@@ -13,11 +13,11 @@ import (
 )
 
 func main() {
-	imgs, err := readImageFile(os.Open("train-images-idx3-ubyte"))
+	imgs, err := readImageFile(os.Open("train-images.idx3-ubyte"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	labels, err := readLabelFile(os.Open("train-labels-idx1-ubyte"))
+	labels, err := readLabelFile(os.Open("train-labels.idx1-ubyte"))
 	if err != nil {
 		log.Fatal(err)
 	}

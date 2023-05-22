@@ -1,34 +1,44 @@
 package main
 
 import (
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/opentype"
 	"image/color"
 	"math"
 	"os"
 	"time"
 
-	"golang.org/x/image/font/gofont/gomono"
 	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/font"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
 
 	"github.com/chewxy/stl"
-	"github.com/golang/freetype/truetype"
 )
 
-var defaultFont vg.Font
+var defaultFont font.Font
 
 func init() {
-	font, err := truetype.Parse(gomono.TTF)
+	fontttf, err := opentype.Parse(gomono.TTF)
 	if err != nil {
 		panic(err)
 	}
-	vg.AddFont("gomono", font)
-	defaultFont, err = vg.MakeFont("gomono", 12)
-	if err != nil {
-		panic(err)
+	defaultFont = font.Font{Typeface: "gomono"}
+	font.DefaultCache.Add([]font.Face{{
+		Font: defaultFont,
+		Face: fontttf,
+	},
+	})
+	if !font.DefaultCache.Has(defaultFont) {
+		panic("no font " + defaultFont.Typeface)
 	}
+	//vg.AddFont("gomono", font)
+	//defaultFont, err = vg.MakeFont("gomono", 12)
+	//if err != nil {
+	//	panic(err)
+	//}
 }
 
 type dateTicks []time.Time
@@ -83,8 +93,8 @@ func (r *residChart) Thumbnail(c *draw.Canvas) {
 }
 
 func newTSPlot(xs []time.Time, ys []float64, seriesName string) *plot.Plot {
-	p, err := plot.New()
-	dieIfErr(err)
+	p := plot.New()
+
 	xys := make(plotter.XYs, len(ys))
 	for i := range ys {
 		xys[i].X = float64(xs[i].Unix())
@@ -99,21 +109,21 @@ func newTSPlot(xs []time.Time, ys []float64, seriesName string) *plot.Plot {
 		p.Legend.TextStyle.Font = defaultFont
 	}
 
-	// dieIfErr(plotutil.AddLines(p, seriesName, xys))
+	//dieIfErr(plotutil.AddLines(p, seriesName, xys))
 	p.X.Tick.Marker = plot.TimeTicks{Format: "2006-01-01"}
 	p.Y.Label.TextStyle.Font = defaultFont
 	p.X.Label.TextStyle.Font = defaultFont
 	p.X.Tick.Label.Font = defaultFont
 	p.Y.Tick.Label.Font = defaultFont
-	p.Title.Font = defaultFont
-	p.Title.Font.Size = 16
+	p.Title.TextStyle.Font = defaultFont
+	p.Title.TextStyle.Font.Size = 16
 
 	return p
 }
 
 func newResidPlot(xs []time.Time, ys []float64, seriesName string) *plot.Plot {
-	p, err := plot.New()
-	dieIfErr(err)
+	p := plot.New()
+
 	xys := make(plotter.XYs, len(ys))
 	for i := range ys {
 		xys[i].X = float64(xs[i].Unix())
@@ -130,16 +140,16 @@ func newResidPlot(xs []time.Time, ys []float64, seriesName string) *plot.Plot {
 	p.X.Label.TextStyle.Font = defaultFont
 	p.X.Tick.Label.Font = defaultFont
 	p.Y.Tick.Label.Font = defaultFont
-	p.Title.Font.Size = 16
+	p.Title.TextStyle.Font.Size = 16
 	return p
 }
 
 func plotDecomposed(xs []time.Time, a stl.Result) [][]*plot.Plot {
 	plots := make([][]*plot.Plot, 4)
-	plots[0] = []*plot.Plot{newTSPlot(xs, a.Data, "Data")}
-	plots[1] = []*plot.Plot{newTSPlot(xs, a.Trend, "Trend")}
-	plots[2] = []*plot.Plot{newTSPlot(xs, a.Seasonal, "Seasonal")}
-	plots[3] = []*plot.Plot{newResidPlot(xs, a.Resid, "Residuals")}
+	plots[0] = []*plot.Plot{newTSPlot(xs, a.Data, "Data")}          //原始数据
+	plots[1] = []*plot.Plot{newTSPlot(xs, a.Trend, "Trend")}        //趋势
+	plots[2] = []*plot.Plot{newTSPlot(xs, a.Seasonal, "Seasonal")}  //季节性
+	plots[3] = []*plot.Plot{newResidPlot(xs, a.Resid, "Residuals")} //残差
 
 	return plots
 }

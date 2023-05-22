@@ -118,10 +118,10 @@ func mainloop(webcam *gocv.VideoCapture) {
 		}
 		grayGoImg = naughtyGrayscale(grayGoImg, goImg)
 		imgParams.Pixels = grayGoImg
-
+		cParams.ImageParams = imgParams
 		// // detect faces
 		rects := classifier.DetectMultiScale(img)
-		dets := pigoClass.RunCascade(imgParams, cParams)
+		dets := pigoClass.RunCascade(cParams, 0.0)
 		dets = pigoClass.ClusterDetections(dets, 0.3)
 
 		// draw a rectangle around each face on the original image,

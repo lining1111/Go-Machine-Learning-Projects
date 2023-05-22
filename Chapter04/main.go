@@ -17,7 +17,7 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
-type loader func() io.Reader
+//type loader func() io.Reader
 
 func readFromFile() io.Reader {
 	reader, err := os.Open("data.txt")
@@ -34,10 +34,11 @@ func download() io.Reader {
 	return reader
 }
 
-func parse(l loader) (dates []string, co2s []float64) {
-	s := bufio.NewScanner(l())
+func parse(l io.Reader) (dates []string, co2s []float64) {
+	s := bufio.NewScanner(l)
 	for s.Scan() {
 		row := s.Text()
+		//跳过注释，以#开头
 		if strings.HasPrefix(row, "#") {
 			continue
 		}
@@ -51,7 +52,8 @@ func parse(l loader) (dates []string, co2s []float64) {
 }
 
 func main() {
-	dateStrings, co2s := parse(readFromFile)
+	f := readFromFile()
+	dateStrings, co2s := parse(f)
 	dates := parseDates(dateStrings)
 	plt := newTSPlot(dates, co2s, "CO2 Level")
 	plt.X.Label.Text = "Time"
@@ -59,6 +61,7 @@ func main() {
 	plt.Title.Text = "CO2 in the atmosphere (ppm) over time\nTaken over the Mauna-Loa observatory"
 	dieIfErr(plt.Save(25*vg.Centimeter, 25*vg.Centimeter, "Moana-Loa.png"))
 
+	//12 每年12个月，12为一年，一年作为周期; 84为7年;  stl.Additive()采用加法模型; stl.WithIter(1) 迭代次数
 	decomposed := stl.Decompose(co2s, 12, 84, stl.Additive(),
 		stl.WithIter(1),
 		// stl.WithTrendConfig(stl.Config{Jump: 1, Width: 18, Fn: loess.Linear}),

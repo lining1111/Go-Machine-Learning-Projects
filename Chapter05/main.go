@@ -275,8 +275,8 @@ func main() {
 	distances, last := knn(asMatrix(tweets), expC, jaccard)
 	log.Printf("distances %v | %v", distances, last)
 
-	plt, err := plot.New()
-	dieIfErr(err)
+	plt := plot.New()
+
 	plotutil.AddLinePoints(plt, "KNN Distance", plotKNNDist(last))
 	plt.Save(25*vg.Centimeter, 25*vg.Centimeter, "KNNDist.png")
 

@@ -66,8 +66,9 @@ func doOnePIGO(img *gocv.Mat, goImg *image.NRGBA, grayGoImg []uint8, pigoClass *
 	imgParams.Pixels = grayGoImg
 
 	// // detect faces
-	// rects := classifier.DetectMultiScale(img)
-	dets := pigoClass.RunCascade(imgParams, cParams)
+	// rects := classifier.DetectMultiScale
+	angle := 0.0
+	dets := pigoClass.RunCascade(cParams, angle)
 	dets = pigoClass.ClusterDetections(dets, 0.3)
 
 }

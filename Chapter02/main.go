@@ -68,8 +68,7 @@ func ingest(f io.Reader) (header []string, data [][]string, indices []map[string
 	return
 }
 
-// cardinality counts the number of unique values in a column.
-// This assumes that the index i of indices represents a column.
+// cardinality 统计列表中每列的数据长度
 func cardinality(indices []map[string][]int) []int {
 	retVal := make([]int, len(indices))
 	for i, m := range indices {

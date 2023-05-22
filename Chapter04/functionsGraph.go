@@ -1,3 +1,4 @@
+//go:build sidenote
 // +build sidenote
 
 package main
@@ -5,26 +6,36 @@ package main
 import (
 	"image/color"
 
-	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/opentype"
 	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/font"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 )
 
-var defaultFont vg.Font
+var defaultFont font.Font
 
 func init() {
-	font, err := truetype.Parse(gomono.TTF)
+	fontttf, err := opentype.Parse(gomono.TTF)
 	if err != nil {
 		panic(err)
 	}
-	vg.AddFont("gomono", font)
-	defaultFont, err = vg.MakeFont("gomono", 12)
-	if err != nil {
-		panic(err)
+	defaultFont = font.Font{Typeface: "gomono"}
+	font.DefaultCache.Add([]font.Face{{
+		Font: defaultFont,
+		Face: fontttf,
+	},
+	})
+	if !font.DefaultCache.Has(defaultFont) {
+		panic("no font " + defaultFont.Typeface)
 	}
+	//vg.AddFont("gomono", font)
+	//defaultFont, err = vg.MakeFont("gomono", 12)
+	//if err != nil {
+	//	panic(err)
+	//}
 }
 
 var table = []struct {
@@ -39,7 +50,7 @@ var table = []struct {
 	{-0.3, -0.6, -0.083333333333333},
 	{-0.2, -0.4, -0.033333333333333},
 	{-0.1, -0.2, -0.003333333333333},
-	{0, -2.71050543121376E-17, 0.006666666666667},
+	{0, -2.71050543121376e-17, 0.006666666666667},
 	{0.1, 0.2, -0.003333333333333},
 	{0.2, 0.4, -0.033333333333333},
 	{0.3, 0.6, -0.083333333333333},
@@ -79,10 +90,8 @@ func (es estimates) Plot(c draw.Canvas, p *plot.Plot) {
 }
 
 func main() {
-	p, err := plot.New()
-	if err != nil {
-		panic(err)
-	}
+	p := plot.New()
+
 	p.Title.Text = "X^2 Function and Its Estimates"
 	p.X.Label.Text = "X"
 	p.Y.Label.Text = "Y"
@@ -94,8 +103,8 @@ func main() {
 	p.X.Label.TextStyle.Font = defaultFont
 	p.X.Tick.Label.Font = defaultFont
 	p.Y.Tick.Label.Font = defaultFont
-	p.Title.Font = defaultFont
-	p.Title.Font.Size = 16
+	p.Title.TextStyle.Font = defaultFont
+	p.Title.TextStyle.Font.Size = 16
 
 	// Original function
 	original := plotter.NewFunction(func(x float64) float64 { return x * x })
