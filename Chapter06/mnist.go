@@ -63,7 +63,7 @@ func readImageFile(r io.Reader, e error) (imgs []RawImage, err error) {
 		return nil, e
 	}
 
-	var magic, n, nrow, ncol int32
+	var magic, n, nrow, ncol int32 //数据的前4个int32的大端字节表示图片的属性
 	if err = binary.Read(r, binary.BigEndian, &magic); err != nil {
 		return nil, err
 	}
@@ -94,6 +94,7 @@ func readImageFile(r io.Reader, e error) (imgs []RawImage, err error) {
 	return imgs, nil
 }
 
+//放缩函数，将0-255放缩到0.0和1.0
 func pixelWeight(px byte) float64 {
 	retVal := (float64(px) / 255 * 0.999) + 0.001
 	if retVal == 1.0 {

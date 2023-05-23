@@ -29,7 +29,7 @@ func ingest(typ string) (examples []Example, err error) {
 	}
 
 	var errs errList
-	start, end := 0, 11
+	start, end := 0, 11 //每部的part最大是10所以end为11
 	// if isCrossVal {
 	// 	start, end = 8, 11
 	// }
@@ -40,14 +40,14 @@ func ingest(typ string) (examples []Example, err error) {
 			errs = append(errs, err)
 			continue
 		}
-
+		//遍历文件集合
 		for _, match := range matches {
 			str, err := ingestOneFile(match)
 			if err != nil {
 				errs = append(errs, errors.WithMessage(err, match))
 				continue
 			}
-
+			//文件名含有spmsg
 			if strings.Contains(match, "spmsg") {
 				// is spam
 				// spams = append(spams, Example{str, Spam})

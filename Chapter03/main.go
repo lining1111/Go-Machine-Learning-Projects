@@ -14,13 +14,13 @@ func main() {
 
 	fmt.Printf("Examples loaded: %d\n", len(examples))
 	shuffle(examples)
-	cvStart := len(examples) - len(examples)/3
+	cvStart := len(examples) - len(examples)/3 //保留30%做交叉验证
 	cv := examples[cvStart:]
 	examples = examples[:cvStart]
 
 	c := New()
 	c.Train(examples)
-
+	//通过训练集，看训练后的结果
 	var corrects, totals float64
 	for _, ex := range examples {
 		// fmt.Printf("%v", c.Score(ham.Document))
@@ -38,7 +38,7 @@ func main() {
 	var unseen, totalWords int
 	for _, ex := range cv {
 		totalWords += len(ex.Document)
-		unseen += c.unseens(ex.Document)
+		unseen += c.unseens(ex.Document) //忽略词的个数
 		class := c.Predict(ex.Document)
 		if class == ex.Class {
 			corrects++

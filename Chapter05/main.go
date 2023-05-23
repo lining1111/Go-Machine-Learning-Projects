@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg"
 	"io"
 	"log"
 	"math/rand"
@@ -19,10 +22,7 @@ import (
 	"github.com/mpraski/clusters"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
-	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/plotutil"
-	"gonum.org/v1/plot/vg"
 )
 
 type processedTweet struct {
@@ -53,6 +53,7 @@ func toDocs(a []*processedTweet) []dmmclust.Document {
 var nl = regexp.MustCompile("\n+")
 var ht = regexp.MustCompile("&.+?;")
 
+//处理器 包含所需信息的单一结构
 type processor struct {
 	tfidf       *tfidf.TFIDF
 	corpus      *corpus.Corpus
@@ -65,6 +66,7 @@ func newProcessor() *processor {
 	c, err := corpus.Construct(corpus.WithWords([]string{mention, hashtag, retweet, URL}))
 	dieIfErr(err)
 
+	//t 文本转换程序，首先，将所有文本转换为分解形式NFD;然后，删除空格;最后，将所有内容转换为NFKC形式
 	t := transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFKC)
 	return &processor{
 		tfidf:       tfidf.New(),
@@ -76,6 +78,7 @@ func newProcessor() *processor {
 
 var xxx = 0
 
+//单字处理,处理一个单词，如果不是忽略词，则返回id
 func (p *processor) single(word string) (wordID int, ok bool) {
 	if _, ok = stopwords[word]; ok {
 		return -1, false
@@ -119,7 +122,7 @@ func (p *processor) process(a []*processedTweet) []*processedTweet {
 		if tt.RetweetedStatus != nil {
 			tt.Tweet = *tt.RetweetedStatus
 		}
-
+		//清洗数据
 		tt.clean, _, err = transform.String(p.transformer, tt.FullText)
 		dieIfErr(err)
 		tt.clean = strings.ToLower(tt.clean)
@@ -127,6 +130,7 @@ func (p *processor) process(a []*processedTweet) []*processedTweet {
 		tt.clean = ht.ReplaceAllString(tt.clean, "")
 		tt.clean = stripPunct(tt.clean)
 		log.Printf("%v", tt.clean)
+		//每条推文都是由FullText组成的，我们希望从文本中提取每个单词，然后给每个单词赋予一个专属的id
 		for _, word := range strings.Fields(tt.clean) {
 			// word = corpus.Singularize(word)
 			wordID, ok := p.single(word)
@@ -145,12 +149,12 @@ func (p *processor) process(a []*processedTweet) []*processedTweet {
 	}
 
 	p.tfidf.CalculateIDF()
-	// calculate scores
+	//计算得分
 	for _, tt := range a {
 		tt.textVec = p.tfidf.Score(tt)
 	}
 
-	// normalize text vector
+	//归一化文本向量
 	size := p.corpus.Size()
 	for _, tt := range a {
 		tt.normTextVec = make([]float64, size)
@@ -215,6 +219,7 @@ func load(r io.Reader) (retVal []*processedTweet) {
 	return retVal
 }
 
+//模拟使用推特的api得到的json
 func mock() []*processedTweet {
 	f, err := os.Open("example.json")
 	dieIfErr(err)
@@ -263,6 +268,22 @@ func largestCluster2(clusters []dmmclust.Cluster) (int, int) {
 	}
 	return retVal, cc[retVal]
 }
+
+//func main() {
+//	tweets := mock()
+//	p := newProcessor()
+//	p.process(tweets)
+//
+//	c, err := clusters.KMeans(10000, 25, clusters.EuclideanDistance)
+//	dieIfErr(err)
+//	data := asMatrix(tweets)
+//	dieIfErr(c.Learn(data))
+//	clusters := c.Guesses()
+//	for i, clust := range clusters {
+//		fmt.Printf("%d: %q\n", clust, tweets[i].FullText)
+//	}
+//
+//}
 
 func main() {
 	f, err := os.Open("dev.json")

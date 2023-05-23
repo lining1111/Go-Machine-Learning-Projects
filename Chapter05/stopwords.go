@@ -15,8 +15,8 @@ func init() {
 func isRT(a string) bool { return a == "RT" || a == "rt" }
 
 const (
-	mention = "<@MENTION>"
-	hashtag = "<#HASHTAG>"
-	retweet = "<RETWEET>"
-	URL     = "<URL>"
+	mention = "<@MENTION>" //提及
+	hashtag = "<#HASHTAG>" //哈希标签
+	retweet = "<RETWEET>"  //转发
+	URL     = "<URL>"      //网址
 )
